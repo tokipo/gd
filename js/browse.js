@@ -6,8 +6,8 @@ let selectedFiles = new Set();
 let draggedItemData = null; // For drag & drop move functionality
 
 // Replace these with your own credentials (if needed)
-const CLIENT_ID = 'YOUR_CLIENT_ID';
-const CLIENT_SECRET = 'YOUR_CLIENT_SECRET';
+const CLIENT_ID = '710279827705-bcpqglr8jlmo3bcrumt1u1dq8okaisjr.apps.googleusercontent.com';
+const CLIENT_SECRET = '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';
 
 // ===== Dummy refreshAccessToken function =====
 async function refreshAccessToken() {
