@@ -4,57 +4,589 @@
     <meta name="robots" content="noindex, nofollow">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="shortcut icon" href="/img/logo.png" type="image/x-icon">
-    <link rel="stylesheet" href="/css/index.css">
+    <title>Multi Drive - Single File Application</title>
+    
+    <!-- External Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <script src="https://unpkg.com/@dotlottie/player-component@2.7.12/dist/dotlottie-player.mjs" type="module"></script>
-    
-    <title>MULTI DRIVE</title>
+
+    <!-- COMBINED CSS -->
+    <style>
+        :root {
+            --primary-color: #4285f4;
+            --secondary-color: #34a853;
+            --warning-color: #fbbc05;
+            --danger-color: #dc3545;
+            --text-color: #333;
+            --border-color: #ddd;
+        }
+
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background: #f8f9fa; }
+        .container { max-width: 1200px; margin: 0 auto; }
+
+        /* General Button Styling */
+        button { align-items: center; gap: 8px; font-size: 16px; font-weight: 500; padding: 12px 18px; border: none; border-radius: 50px; color: #333; cursor: pointer; transition: all 0.3s ease-in-out; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
+        .btn { padding: 8px 16px; border-radius: 20px; border: none; cursor: pointer; font-weight: 500; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-primary { background: var(--primary-color); color: white; }
+        .btn-danger { background: transparent; color: var(--danger-color); margin-top: -20px; margin-left: auto; display: block; box-shadow: none; padding: 0;}
+        button:hover, .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-danger:hover { background-color: #ff999938; }
+
+        /* --- INDEX VIEW STYLES --- */
+        .header { text-align: center; margin-bottom: 30px; }
+        .account-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; }
+        .account-card { background: #ffffff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); transition: transform 0.2s; position: relative; }
+        .account-card:hover { transform: translateY(-2px); }
+        .account-header { display: flex; align-items: center; margin-bottom: 20px; margin-top: -10px; }
+        .profile-pic { width: 50px; height: 50px; border-radius: 50%; margin-right: 15px; border: 2px solid #eee; }
+        .user-info { flex-grow: 1; }
+        .user-name { margin: 0; font-weight: 600; color: #333; }
+        .user-email { margin: 0; font-size: 0.9em; color: #666; word-break: break-all; }
+        
+        .storage-bar { width: 100%; height: 10px; background: #ddd; border-radius: 5px; margin-bottom: 10px; overflow: hidden; }
+        .storage-fill { height: 100%; border-radius: 5px; transition: width 0.5s ease-out; }
+        .storage-info { text-align: center; margin-bottom: 20px; font-size: 14px; color: #555;}
+        
+        .search-container { display: flex; margin-top: 10px; border-radius: 30px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); max-width: 400px; margin: 0 auto; margin-top: 10px; }
+        #searchInput { flex: 1; padding: 8px 12px; border: 1px solid #ddd; border-top-left-radius: 30px; border-bottom-left-radius: 30px; border-top-right-radius: 0px; border-bottom-right-radius: 0px; font-size: 16px; outline: none; transition: all 0.3s ease; }
+        #searchInput:focus { border-color: #007bff; box-shadow: 0 0 5px rgba(0, 123, 255, 0.3); }
+        #searchBtn { border-top-left-radius: 0px; border-bottom-left-radius: 0px; border-top-right-radius: 30px; border-bottom-right-radius: 30px; transform: none; box-shadow: none;}
+        #addAccountBtn { font-family: Verdana, Geneva, Tahoma, sans-serif; font-size: 13px; }
+
+        /* --- BROWSE VIEW STYLES --- */
+        .top-controls { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;}
+        .back-button, .create-folder-button { padding: 10px 20px; background: var(--primary-color); color: white; border: none; cursor: pointer; transition: opacity 0.2s; }
+        .move-button { background-color: var(--primary-color); color: white; padding: 10px 15px; border: none; border-radius: 30px; cursor: pointer; }
+        .move-button:disabled { background-color: #9E9E9E; cursor: not-allowed; }
+        
+        .drop-zone { border: 2px dashed var(--primary-color); padding: 20px; text-align: center; color: var(--primary-color); margin: 20px 0; border-radius: 8px; background: #f0f4ff; cursor: pointer; }
+        .drop-zone.dragover { background: #e0e8ff; }
+        
+        .drive-item { display: flex; align-items: center; margin: 8px 0; padding: 12px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: transform 0.2s; }
+        .drive-item:hover { transform: translateX(4px); }
+        .item-icon { width: 30px; text-align: center; color: #666; font-size: 1.2rem; margin-right: 10px;}
+        .item-name { flex-grow: 1; color: var(--text-color); font-weight: 500; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;}
+        .file-info { font-size: 0.85em; color: #888; margin-right: 15px; white-space: nowrap;}
+        
+        .item-actions { display: flex; align-items: center; gap: 5px; }
+        .action-btn { background: none; border: none; cursor: pointer; color: #666; padding: 8px; border-radius: 4px; transition: all 0.2s; box-shadow: none; font-size: 1rem;}
+        .copy-btn:hover { color: var(--primary-color); background: #f0f4ff; }
+        .rename-btn:hover { color: var(--secondary-color); background: #f0f4ff; }
+        .delete-btn:hover { color: var(--danger-color); background: #f0f4ff; }
+
+        /* Modals & UI Elements */
+        .toast { position: fixed; bottom: 20px; right: 20px; background: #333; color: white; padding: 12px 20px; border-radius: 8px; animation: slideIn 0.3s ease-out; display: none; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); z-index: 2000; }
+        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
+        .modal-content { background-color: #fff; margin: 15% auto; padding: 20px; width: 90%; max-width: 500px; border-radius: 10px; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
+        .close-modal { background: none; border: none; font-size: 1.5rem; cursor: pointer; box-shadow: none; color: #333;}
+        .modal-body { margin: 20px 0; }
+        .modal-body input { width: 90%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px;}
+        .modal-footer { display: flex; justify-content: flex-end; gap: 10px; }
+
+        /* Upload Progress */
+        #uploadProgressContainer { position: fixed; bottom: 20px; left: 20px; background: #ffffff; padding: 1rem 1.5rem; border-radius: 12px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1); display: flex; align-items: center; gap: 1rem; z-index: 1000; }
+        #uploadProgress { width: 150px; height: 8px; border-radius: 4px; background: #e0e0e0; border: none; appearance: none; }
+        #uploadProgress::-webkit-progress-bar { background: #e0e0e0; border-radius: 4px; }
+        #uploadProgress::-webkit-progress-value { background-color: var(--primary-color); border-radius: 4px; transition: all 0.2s ease; }
+        #uploadProgressText { font-size: 0.9rem; color: #5f6368; font-weight: 500; }
+        
+        .empty-state { text-align: center; color: #777; margin-top: 50px; font-size: 1.2rem;}
+        .breadcrumb { font-size: 1rem; margin-bottom: 15px; color: #555; }
+        .breadcrumb span { cursor: pointer; color: var(--primary-color); }
+        .breadcrumb span:hover { text-decoration: underline; }
+    </style>
 </head>
 <body>
 
-    <div class="header">
-        <h1>Google Drive Account Manager</h1>
-        <button class="btn btn-primary" onclick="handleAuthClick()">
-            <i class="material-symbols-outlined"> person_add </i> Add Google Account
-        </button>
-        <div class="search-container">
-            <input type="text" id="searchInput" placeholder="Search for folders..." />
-            <button class="btn btn-primary" id="searchBtn">
-                <i class="material-symbols-outlined"> search </i>
+    <!-- =========================================================
+         VIEW 1: ACCOUNTS LIST 
+         ========================================================= -->
+    <div id="index-view" style="display: block;">
+        <div class="header">
+            <h1>Multi Drive Account Manager</h1>
+            <button class="btn btn-primary" onclick="handleAuthClick()" id="addAccountBtn">
+                <i class="material-symbols-outlined"> person_add </i> Add Google Account
             </button>
+            <div style="margin-top:10px; font-size:12px; color:red;" id="localWarning"></div>
+        </div>
+
+        <div class="container">
+            <h2 id="accountTitle">Accounts Added</h2>
+            <div class="account-list" id="accountList">
+                <!-- Accounts will be injected here via JS -->
+            </div>
         </div>
     </div>
 
-    <div class="container">
-        <h2 id="accountTitle">Accounts</h2>
-        <div class="account-list" id="accountList"> </div>
 
-        <h2 id="searchTitle" style="display: none">Search Results</h2>
-        <button id="backBtn" class="btn btn-secondary" onclick="resetSearch()" style="display: none;">
-            <i class="material-symbols-outlined">arrow_back</i>
-        </button>
+    <!-- =========================================================
+         VIEW 2: FILE BROWSER
+         ========================================================= -->
+    <div id="browse-view" style="display: none;">
+        <div class="container">
+            <div class="top-controls">
+                <button class="back-button" onclick="switchView('index-view')">
+                    <i class="fas fa-arrow-left"></i> Home
+                </button>
+                <button class="create-folder-button" onclick="openCreateFolderModal()">
+                    <i class="fa-solid fa-folder-plus"></i> New Folder
+                </button>
+                <button class="back-button" onclick="goUpFolder()" id="goUpBtn" style="display:none; background-color: #6c757d;">
+                    <i class="fas fa-level-up-alt"></i> Go Up
+                </button>
+            </div>
 
-        <div class="search-results" id="searchResults"></div>
+            <div class="breadcrumb" id="breadcrumb">Current Location: <span>Root</span></div>
+
+            <div class="drop-zone" id="dropZone" onclick="document.getElementById('hiddenFileInput').click()">
+                <i class="fas fa-upload"></i> Drag and drop files here to upload (or click)
+            </div>
+            <input type="file" id="hiddenFileInput" multiple style="display:none;" onchange="handleFileSelect(event)">
+
+            <div id="driveContents">
+                <!-- Files injected here -->
+            </div>
+        </div>
+
+        <!-- Upload Progress Toast -->
+        <div id="uploadProgressContainer" style="display: none;">
+            <span id="uploadProgressText">Uploading...</span>
+            <progress id="uploadProgress" value="0" max="100"></progress>
+        </div>
+        
+        <div class="toast" id="toast">Copied to clipboard!</div>
+        
+        <!-- Action Modal (Rename/Create Folder) -->
+        <div class="modal" id="inputModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="modalTitle">Modal Title</h3>
+                    <button class="close-modal" onclick="closeModal('inputModal')">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" id="modalInput" placeholder="Enter name...">
+                </div>
+                <div class="modal-footer">
+                    <button class="btn" style="background:#ddd; color:#333;" onclick="closeModal('inputModal')">Cancel</button>
+                    <button class="btn btn-primary" id="modalSubmitBtn">Save</button>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- Google API scripts -->
-    <script src="/js/index.js"></script>
-    <script src="https://apis.google.com/js/api.js"></script>
-    <script src="https://accounts.google.com/gsi/client"></script>
-    <script src="/credentials.js"></script>
+
+    <!-- =========================================================
+         JAVASCRIPT LOGIC & GOOGLE APIs
+         ========================================================= -->
+    <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
+    <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
 
     <script>
-        // Get the Lottie animation element
-        const lottieAnimation = document.getElementById("lottieAnimation");
+        // Check if running locally via file:// which blocks Google Login
+        if (window.location.protocol === 'file:') {
+            document.getElementById('localWarning').innerText = "Warning: Google Login will NOT work using 'file://'. Please host this file on a local server or a free host like Netlify/GitHub Pages.";
+        }
 
-        // Pause the animation when it completes
-        lottieAnimation.addEventListener("complete", () => {
-            lottieAnimation.pause();
+        // ==========================================
+        // CONFIGURATION (Using Dummy Credentials as requested)
+        // ==========================================
+        const CLIENT_ID = '710279827705-bcpqglr8jlmo3bcrumt1u1dq8okaisjr.apps.googleusercontent.com';
+        const API_KEY = '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';
+        const DISCOVERY_DOCS =["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
+        const SCOPES = "https://www.googleapis.com/auth/drive";
+
+        // ==========================================
+        // STATE VARIABLES
+        // ==========================================
+        let tokenClient;
+        let isGapiLoaded = false;
+        let isGisLoaded = false;
+        let accounts = JSON.parse(localStorage.getItem('multidrive_accounts')) ||[];
+        
+        // Browsing State
+        let currentActiveEmail = null;
+        let currentActiveToken = null;
+        let folderStack = [{ id: 'root', name: 'Root' }]; 
+        
+        // ==========================================
+        // INITIALIZATION
+        // ==========================================
+        function gapiLoaded() { gapi.load('client', initializeGapiClient); }
+        
+        async function initializeGapiClient() {
+            try {
+                await gapi.client.init({ apiKey: API_KEY, discoveryDocs: DISCOVERY_DOCS });
+                isGapiLoaded = true;
+                renderAccounts();
+            } catch (error) {
+                console.error('Error initializing GAPI client', error);
+            }
+        }
+
+        function gisLoaded() {
+            tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: CLIENT_ID,
+                scope: SCOPES,
+                callback: handleAuthResponse
+            });
+            isGisLoaded = true;
+        }
+
+        function handleAuthClick() {
+            if (isGapiLoaded && isGisLoaded) {
+                tokenClient.requestAccessToken({prompt: 'consent'});
+            } else {
+                alert("Google APIs are still loading. Please wait a second.");
+            }
+        }
+
+        // ==========================================
+        // ACCOUNT MANAGEMENT
+        // ==========================================
+        async function handleAuthResponse(tokenResponse) {
+            if (tokenResponse.error) {
+                console.error("Auth Error:", tokenResponse);
+                return;
+            }
+            
+            const token = tokenResponse.access_token;
+            gapi.client.setToken({ access_token: token });
+
+            try {
+                // Fetch User Info & Storage Data
+                let response = await gapi.client.drive.about.get({ fields: 'user, storageQuota' });
+                let user = response.result.user;
+                let quota = response.result.storageQuota;
+
+                let accountObj = {
+                    email: user.emailAddress,
+                    name: user.displayName,
+                    photo: user.photoLink,
+                    token: token,
+                    usage: quota.usage || 0,
+                    limit: quota.limit || 1
+                };
+
+                // Add or update existing account
+                let existingIndex = accounts.findIndex(a => a.email === user.emailAddress);
+                if (existingIndex >= 0) {
+                    accounts[existingIndex] = accountObj;
+                } else {
+                    accounts.push(accountObj);
+                }
+
+                saveAccounts();
+                renderAccounts();
+            } catch (err) {
+                console.error("Failed to fetch user data:", err);
+                alert("Failed to authenticate with Google Drive.");
+            }
+        }
+
+        function saveAccounts() {
+            localStorage.setItem('multidrive_accounts', JSON.stringify(accounts));
+        }
+
+        function formatBytes(bytes, decimals = 2) {
+            if (!+bytes) return '0 Bytes';
+            const k = 1024, dm = decimals < 0 ? 0 : decimals, sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+        }
+
+        function renderAccounts() {
+            const list = document.getElementById('accountList');
+            list.innerHTML = '';
+
+            if (accounts.length === 0) {
+                list.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color:#777;">No accounts added yet. Click 'Add Google Account'.</p>`;
+                return;
+            }
+
+            accounts.forEach((acc, index) => {
+                let percent = (acc.usage / acc.limit) * 100;
+                let color = percent > 90 ? 'var(--danger-color)' : percent > 70 ? 'var(--warning-color)' : 'var(--primary-color)';
+
+                list.innerHTML += `
+                    <div class="account-card">
+                        <button class="action-btn btn-danger" onclick="removeAccount(${index})" title="Disconnect">
+                            <i class="fas fa-minus-circle"></i>
+                        </button>
+                        <div class="account-header">
+                            <img src="${acc.photo || 'https://via.placeholder.com/50'}" class="profile-pic" alt="Profile">
+                            <div class="user-info">
+                                <h3 class="user-name">${acc.name}</h3>
+                                <p class="user-email">${acc.email}</p>
+                            </div>
+                        </div>
+                        <div class="storage-bar">
+                            <div class="storage-fill" style="width: ${percent}%; background-color: ${color};"></div>
+                        </div>
+                        <div class="storage-info">
+                            ${formatBytes(acc.usage)} / ${formatBytes(acc.limit)} (${percent.toFixed(1)}%) Used
+                        </div>
+                        <div style="text-align: center;">
+                            <button class="btn btn-primary" onclick="startBrowsing('${acc.email}')">
+                                <i class="fas fa-folder-open"></i> Browse Files
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function removeAccount(index) {
+            if (confirm("Disconnect this account?")) {
+                accounts.splice(index, 1);
+                saveAccounts();
+                renderAccounts();
+            }
+        }
+
+        // ==========================================
+        // UI VIEW SWITCHER
+        // ==========================================
+        function switchView(viewId) {
+            document.getElementById('index-view').style.display = 'none';
+            document.getElementById('browse-view').style.display = 'none';
+            document.getElementById(viewId).style.display = 'block';
+        }
+
+        // ==========================================
+        // BROWSE & FILE MANAGER LOGIC
+        // ==========================================
+        function startBrowsing(email) {
+            let acc = accounts.find(a => a.email === email);
+            if (!acc) return;
+            
+            currentActiveEmail = acc.email;
+            currentActiveToken = acc.token;
+            gapi.client.setToken({ access_token: acc.token });
+            
+            folderStack = [{ id: 'root', name: 'Root' }];
+            switchView('browse-view');
+            loadFiles();
+        }
+
+        function getCurrentFolderId() {
+            return folderStack[folderStack.length - 1].id;
+        }
+
+        function updateBreadcrumb() {
+            let bc = document.getElementById('breadcrumb');
+            bc.innerHTML = "Location: " + folderStack.map((f, i) => {
+                if(i === folderStack.length - 1) return `<b>${f.name}</b>`;
+                return `<span onclick="goToFolderIndex(${i})">${f.name}</span>`;
+            }).join(' > ');
+
+            document.getElementById('goUpBtn').style.display = folderStack.length > 1 ? 'inline-block' : 'none';
+        }
+
+        function goUpFolder() {
+            if (folderStack.length > 1) {
+                folderStack.pop();
+                loadFiles();
+            }
+        }
+
+        function goToFolderIndex(index) {
+            folderStack = folderStack.slice(0, index + 1);
+            loadFiles();
+        }
+
+        async function loadFiles() {
+            const container = document.getElementById('driveContents');
+            container.innerHTML = `<div class="empty-state"><i class="fas fa-spinner fa-spin"></i> Loading files...</div>`;
+            updateBreadcrumb();
+
+            try {
+                let response = await gapi.client.drive.files.list({
+                    q: `'${getCurrentFolderId()}' in parents and trashed = false`,
+                    fields: 'files(id, name, mimeType, size, modifiedTime, webViewLink)',
+                    orderBy: 'folder, name'
+                });
+                
+                let files = response.result.files;
+                container.innerHTML = '';
+
+                if (files.length === 0) {
+                    container.innerHTML = `<div class="empty-state">This folder is empty.</div>`;
+                    return;
+                }
+
+                files.forEach(f => {
+                    let isFolder = f.mimeType === 'application/vnd.google-apps.folder';
+                    let icon = isFolder ? '<i class="fas fa-folder" style="color:#fbbc05;"></i>' : '<i class="fas fa-file-alt" style="color:#4285f4;"></i>';
+                    
+                    container.innerHTML += `
+                        <div class="drive-item">
+                            <div class="item-icon">${icon}</div>
+                            <div class="item-name" onclick="${isFolder ? `enterFolder('${f.id}', '${f.name.replace(/'/g, "\\'")}')` : `window.open('${f.webViewLink}', '_blank')`}">
+                                ${f.name}
+                            </div>
+                            <div class="file-info">${isFolder ? '--' : formatBytes(f.size)}</div>
+                            <div class="item-actions">
+                                <button class="action-btn copy-btn" onclick="copyToClipboard('${f.webViewLink}')" title="Copy Link"><i class="fas fa-link"></i></button>
+                                <button class="action-btn rename-btn" onclick="openRenameModal('${f.id}', '${f.name.replace(/'/g, "\\'")}')" title="Rename"><i class="fas fa-edit"></i></button>
+                                <button class="action-btn delete-btn" onclick="deleteFile('${f.id}', '${f.name.replace(/'/g, "\\'")}')" title="Delete"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = `<div class="empty-state" style="color:red;">Error loading files. Token might be expired. Go Home and reconnect.</div>`;
+            }
+        }
+
+        function enterFolder(id, name) {
+            folderStack.push({ id, name });
+            loadFiles();
+        }
+
+        // ==========================================
+        // FILE OPERATIONS (Rename, Delete, Create Folder)
+        // ==========================================
+        async function deleteFile(id, name) {
+            if (confirm(`Are you sure you want to delete "${name}"?`)) {
+                try {
+                    await gapi.client.drive.files.delete({ fileId: id });
+                    showToast("Item deleted");
+                    loadFiles();
+                } catch (err) {
+                    alert("Failed to delete file.");
+                }
+            }
+        }
+
+        // Modals handling
+        let currentModalAction = null;
+        let currentModalFileId = null;
+
+        function openCreateFolderModal() {
+            document.getElementById('modalTitle').innerText = "Create New Folder";
+            document.getElementById('modalInput').value = "";
+            document.getElementById('inputModal').style.display = "block";
+            currentModalAction = 'create';
+            document.getElementById('modalInput').focus();
+        }
+
+        function openRenameModal(id, currentName) {
+            document.getElementById('modalTitle').innerText = "Rename Item";
+            document.getElementById('modalInput').value = currentName;
+            document.getElementById('inputModal').style.display = "block";
+            currentModalAction = 'rename';
+            currentModalFileId = id;
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).style.display = "none";
+        }
+
+        document.getElementById('modalSubmitBtn').onclick = async function() {
+            let val = document.getElementById('modalInput').value.trim();
+            if(!val) return;
+            
+            closeModal('inputModal');
+            
+            try {
+                if (currentModalAction === 'create') {
+                    await gapi.client.drive.files.create({
+                        resource: { name: val, mimeType: 'application/vnd.google-apps.folder', parents: [getCurrentFolderId()] }
+                    });
+                    showToast("Folder created");
+                } else if (currentModalAction === 'rename') {
+                    await gapi.client.drive.files.update({
+                        fileId: currentModalFileId,
+                        resource: { name: val }
+                    });
+                    showToast("Item renamed");
+                }
+                loadFiles();
+            } catch (e) {
+                alert("Operation failed. See console.");
+                console.error(e);
+            }
+        };
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => showToast("Link copied to clipboard!"));
+        }
+
+        function showToast(msg) {
+            let t = document.getElementById('toast');
+            t.innerText = msg;
+            t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 3000);
+        }
+
+        // ==========================================
+        // DRAG & DROP MULTIPART UPLOAD
+        // ==========================================
+        const dropZone = document.getElementById('dropZone');
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
         });
-    </script>
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) uploadFiles(e.dataTransfer.files);
+        });
 
+        function handleFileSelect(event) {
+            if (event.target.files.length) uploadFiles(event.target.files);
+            event.target.value = ''; // reset
+        }
+
+        async function uploadFiles(files) {
+            let container = document.getElementById('uploadProgressContainer');
+            let progress = document.getElementById('uploadProgress');
+            let text = document.getElementById('uploadProgressText');
+            
+            container.style.display = 'flex';
+            
+            for (let i = 0; i < files.length; i++) {
+                let file = files[i];
+                text.innerText = `Uploading ${i+1}/${files.length}: ${file.name}`;
+                progress.value = 0;
+                await uploadSingleFile(file, progress);
+            }
+            
+            container.style.display = 'none';
+            showToast("Uploads completed!");
+            loadFiles();
+        }
+
+        function uploadSingleFile(file, progressEl) {
+            return new Promise((resolve, reject) => {
+                const metadata = { name: file.name, parents: [getCurrentFolderId()] };
+                
+                const form = new FormData();
+                form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+                form.append('file', file);
+
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart');
+                xhr.setRequestHeader('Authorization', 'Bearer ' + currentActiveToken);
+                
+                xhr.upload.onprogress = (e) => {
+                    if (e.lengthComputable) {
+                        progressEl.value = (e.loaded / e.total) * 100;
+                    }
+                };
+                
+                xhr.onload = () => resolve(xhr.responseText);
+                xhr.onerror = () => reject(xhr.statusText);
+                xhr.send(form);
+            });
+        }
+    </script>
 </body>
 </html>
